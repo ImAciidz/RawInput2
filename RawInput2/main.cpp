@@ -108,7 +108,7 @@ void GetAccumulatedMouseDeltasAndResetAccumulators(float* mx, float* my, float f
 	static float* m_flAccumulatedMouseYMovement = (float*)((uintptr_t)g_Input + 0xC);
 
 	static uintptr_t client = (uintptr_t)GetModuleHandle("client.dll");
-	int m_rawinput = *(int*)(client + 0x4F5EA0);
+	int m_rawinput = *(int*)(client + 0x73AC90);
 
 	//ConMsg("GetAccumulatedMouseDeltasAndResetAccumulators: %.3f | %.3f | %d\n", *(float*)m_flAccumulatedMouseXMovement, *(float*)m_flAccumulatedMouseYMovement, m_rawinput);
 
@@ -210,13 +210,13 @@ DWORD InjectionEntryPoint(DWORD processID)
 
 	auto inputsystem_factory = reinterpret_cast<CreateInterfaceFn>(GetProcAddress(GetModuleHandleA("inputsystem.dll"), "CreateInterface"));
 	g_InputSystem = reinterpret_cast<IInputSystem*>(inputsystem_factory("InputSystemVersion001", nullptr));
-	g_Input = **reinterpret_cast<CInput***>(FindPattern("client.dll", "8B 0D ? ? ? ? 8B 01 FF 60 44") + 2);
+	g_Input = **reinterpret_cast<CInput***>(FindPattern("client.dll", "8B 0D ?? ?? ?? ?? 8B 01 8B 40 1C 5D FF E0") + 2);
 
 	oGetRawMouseAccumulators = (GetRawMouseAccumulatorsFn)(FindPattern("inputsystem.dll", "55 8B EC 8B 45 08 8B 91 9C 11 00 00"));
 	oWindowProc = (WindowProcFn)(FindPattern("inputsystem.dll", "55 8B EC 83 EC 20 57"));
-	oGetAccumulatedMouseDeltasAndResetAccumulators = (GetAccumulatedMouseDeltasAndResetAccumulatorsFn)(FindPattern("client.dll", "55 8B EC 53 8B 5D 0C 56 8B F1 57"));
-	oControllerMove = (ControllerMoveFn)(FindPattern("client.dll", "55 8B EC 56 8B F1 57 8B 7D 0C 80 BE 8C 00 00 00 00"));
-	oIn_SetSampleTime = (In_SetSampleTimeFn)(FindPattern("client.dll", "55 8B EC F3 0F 10 45 08 F3 0F 11 41 1C"));
+	oGetAccumulatedMouseDeltasAndResetAccumulators = (GetAccumulatedMouseDeltasAndResetAccumulatorsFn)(FindPattern("client.dll", "55 8B EC 53 56 57 8B 7D ?? 57 E8 ?? ?? ?? ??"));
+	oControllerMove = (ControllerMoveFn)(FindPattern("client.dll", "55 8B EC A1 ?? ?? ?? ?? 53 8B 5D ?? 56 57 8B 7D ?? "));
+	oIn_SetSampleTime = (In_SetSampleTimeFn)(FindPattern("client.dll", "55 8B EC 56 8B F1 E8 25 12 08 00 83 F8 FF 74"));
 
 	uintptr_t tier = (uintptr_t)GetModuleHandleA("tier0.dll");
 	ConMsg = (ConMsgFn)(uintptr_t)GetProcAddress((HMODULE)tier, "?ConMsg@@YAXPBDZZ");
@@ -305,13 +305,13 @@ void PEInjector(DWORD processID, DWORD Func(DWORD))
 //Сredits: https://github.com/alkatrazbhop/BunnyhopAPE
 int main()
 {
-	SetConsoleTitle("CS:S RawInput2");
+	SetConsoleTitle("L4D2 RawInput2");
 
 	DWORD processID;
-	printf("Waiting for CS:S to start...");
+	printf("Waiting for L4D2 to start...");
 	while (1)
 	{
-		processID = GetPIDByName("hl2.exe");
+		processID = GetPIDByName("left4dead2.exe");
 		if (processID) break;
 		Sleep(1000);
 	}
@@ -325,7 +325,7 @@ int main()
 		Sleep(1000);
 	}
 
-	DWORD pHL = (DWORD)GetModuleHandleExtern(processID, "hl2.exe");
+	DWORD pHL = (DWORD)GetModuleHandleExtern(processID, "left4dead2.exe");
 	DWORD* pCmdLine = (DWORD*)(FindPatternEx(g_hProcess, pHL, 0x4000, (PBYTE)"\x85\xC0\x79\x08\x6A\x08", "xxxxxx") - 0x13);
 	char* cmdLine = new char[255];
 	ReadProcessMemory(g_hProcess, pCmdLine, &pCmdLine, sizeof(DWORD), NULL);
