@@ -10,8 +10,8 @@ CInput* g_Input = nullptr;
 
 typedef bool(__thiscall* GetRawMouseAccumulatorsFn)(void*, int&, int&);
 typedef LRESULT(__thiscall* WindowProcFn)(void*, HWND, UINT, WPARAM, LPARAM);
-typedef void(__thiscall* GetAccumulatedMouseDeltasAndResetAccumulatorsFn)(void*, float*, float*);
-typedef void(__thiscall* ControllerMoveFn)(void*, float, void*);
+typedef void(__thiscall* GetAccumulatedMouseDeltasAndResetAccumulatorsFn)(void*, int, float*, float*);
+typedef void(__thiscall* ControllerMoveFn)(void*, int, float, void*);
 typedef void(__thiscall* In_SetSampleTimeFn)(void*, float);
 
 GetRawMouseAccumulatorsFn oGetRawMouseAccumulators;
@@ -182,11 +182,11 @@ void __fastcall Hooked_GetAccumulatedMouseDeltasAndResetAccumulators(void* thisp
 	//oGetAccumulatedMouseDeltasAndResetAccumulators(thisptr, mx, my);
 }
 
-void __fastcall Hooked_ControllerMove(void* thisptr, void* edx, float ft, void* cmd)
+void __fastcall Hooked_ControllerMove(void* thisptr, void* edx, int nSlot, float ft, void* cmd)
 {
 	mouseMoveFrameTime = ft;
 
-	oControllerMove(thisptr, mouseMoveFrameTime, cmd);
+	oControllerMove(thisptr, nSlot, mouseMoveFrameTime, cmd);
 }
 
 void __fastcall Hooked_IN_SetSampleTime(void* thisptr, void* edx, float frametime)
