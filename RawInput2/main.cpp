@@ -41,9 +41,9 @@ void Error(char* text)
 
 bool GetRawMouseAccumulators(int& accumX, int& accumY, double frame_split)
 {
-	static int* m_mouseRawAccumX = (int*)((uintptr_t)g_InputSystem + 0x119C);
-	static int* m_mouseRawAccumY = (int*)((uintptr_t)g_InputSystem + 0x11A0);
-	static bool* m_bRawInputSupported = (bool*)((uintptr_t)g_InputSystem + 0x1198);
+	static int* m_mouseRawAccumX = (int*)((uintptr_t)g_InputSystem + 0x3E2C);
+	static int* m_mouseRawAccumY = (int*)((uintptr_t)g_InputSystem + 0x3E30);
+	static bool* m_bRawInputSupported = (bool*)((uintptr_t)g_InputSystem + 0x3E28);
 
 	//ConMsg("GetRawMouseAccumulators: %d | %d | %d\n", *(int*)m_mouseRawAccumX, *(int*)m_mouseRawAccumY, *(bool*)m_bRawInputSupported);
 
@@ -99,13 +99,13 @@ bool GetRawMouseAccumulators(int& accumX, int& accumY, double frame_split)
 	return *(bool*)m_bRawInputSupported;
 }
 
-void GetAccumulatedMouseDeltasAndResetAccumulators(float* mx, float* my, float frametime)
+void GetAccumulatedMouseDeltasAndResetAccumulators(int nSlot, float* mx, float* my, float frametime)
 {
 	//Assert(mx);
 	//Assert(my);
 
-	static float* m_flAccumulatedMouseXMovement = (float*)((uintptr_t)g_Input + 0x8);
-	static float* m_flAccumulatedMouseYMovement = (float*)((uintptr_t)g_Input + 0xC);
+	float* m_flAccumulatedMouseXMovement = (float*)((uintptr_t)g_Input + 0x34 + nSlot * 0xcc);
+	float* m_flAccumulatedMouseYMovement = (float*)((uintptr_t)g_Input + 0x38 + nSlot * 0xcc);
 
 	static uintptr_t client = (uintptr_t)GetModuleHandle("client.dll");
 	int m_rawinput = *(int*)(client + 0x73AC90);
@@ -171,9 +171,9 @@ LRESULT __fastcall Hooked_WindowProc(void* thisptr, void* edx, HWND hwnd, UINT u
 	return oWindowProc(thisptr, hwnd, uMsg, wParam, lParam);
 }
 
-void __fastcall Hooked_GetAccumulatedMouseDeltasAndResetAccumulators(void* thisptr, void* edx, float* mx, float* my)
+void __fastcall Hooked_GetAccumulatedMouseDeltasAndResetAccumulators(void* thisptr, void* edx, int nSlot, float* mx, float* my)
 {
-	GetAccumulatedMouseDeltasAndResetAccumulators(mx, my, mouseMoveFrameTime);
+	GetAccumulatedMouseDeltasAndResetAccumulators(nSlot, mx, my, mouseMoveFrameTime);
 
 	mouseMoveFrameTime = 0.0;
 
@@ -212,8 +212,8 @@ DWORD InjectionEntryPoint(DWORD processID)
 	g_InputSystem = reinterpret_cast<IInputSystem*>(inputsystem_factory("InputSystemVersion001", nullptr));
 	g_Input = **reinterpret_cast<CInput***>(FindPattern("client.dll", "8B 0D ?? ?? ?? ?? 8B 01 8B 40 1C 5D FF E0") + 2);
 
-	oGetRawMouseAccumulators = (GetRawMouseAccumulatorsFn)(FindPattern("inputsystem.dll", "55 8B EC 8B 45 08 8B 91 9C 11 00 00"));
-	oWindowProc = (WindowProcFn)(FindPattern("inputsystem.dll", "55 8B EC 83 EC 20 57"));
+	oGetRawMouseAccumulators = (GetRawMouseAccumulatorsFn)(FindPattern("inputsystem.dll", "55 8B EC 8B 81 ?? ?? ?? ??"));
+	oWindowProc = (WindowProcFn)(FindPattern("inputsystem.dll", "55 8B EC 83 EC 08 56 8B F1"));
 	oGetAccumulatedMouseDeltasAndResetAccumulators = (GetAccumulatedMouseDeltasAndResetAccumulatorsFn)(FindPattern("client.dll", "55 8B EC 53 56 57 8B 7D ?? 57 E8 ?? ?? ?? ??"));
 	oControllerMove = (ControllerMoveFn)(FindPattern("client.dll", "55 8B EC A1 ?? ?? ?? ?? 53 8B 5D ?? 56 57 8B 7D ?? "));
 	oIn_SetSampleTime = (In_SetSampleTimeFn)(FindPattern("client.dll", "55 8B EC 56 8B F1 E8 25 12 08 00 83 F8 FF 74"));
